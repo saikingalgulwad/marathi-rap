@@ -14,7 +14,7 @@ export default function Home() {
     async function fetchVideos() {
       setLoading(true)
       try {
-        const res = await fetch(`/api/youtube?q=${encodeURIComponent(search)}&maxResults=18`)
+        const res = await fetch(`/api/youtube?q=${encodeURIComponent(search)}&maxResults=40`)
         const data = await res.json()
         setVideos(data.items || [])
       } catch (err) {
