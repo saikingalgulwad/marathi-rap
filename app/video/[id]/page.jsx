@@ -85,7 +85,7 @@ export default function VideoPage() {
         {/* 🎶 Recommended Section */}
         <aside className="w-full lg:w-80">
           <h2 className="text-xl font-semibold mb-4 text-yellow-400">
-            YouTube Recommended (Marathi Rap)
+             Recommended (Marathi Rap)
           </h2>
           <div className="flex flex-col gap-4">
             {recommended.length > 0 ? (
