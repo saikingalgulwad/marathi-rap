@@ -1,53 +1,87 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import './App.css';
+import LandingPage from './pages/LandingPage';
+import Dashboard from './pages/Dashboard';
+import ResumeBuilder from './pages/ResumeBuilder';
+import JobListings from './pages/JobListings';
+import Applications from './pages/Applications';
+import AutoApplySettings from './pages/AutoApplySettings';
+import Profile from './pages/Profile';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+export const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+// Auth Context
+export const AuthContext = React.createContext(null);
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for stored token
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchUser(token);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchUser = async (token) => {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      const response = await fetch(`${API}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        localStorage.removeItem('token');
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      localStorage.removeItem('token');
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  const login = (token, userData) => {
+    localStorage.setItem('token', token);
+    setUser(userData);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
+    <AuthContext.Provider value={{ user, login, logout }}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+          <Route path="/" element={user ? <Navigate to="/dashboard" /> : <LandingPage />} />
+          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" />} />
+          <Route path="/resume" element={user ? <ResumeBuilder /> : <Navigate to="/" />} />
+          <Route path="/jobs" element={user ? <JobListings /> : <Navigate to="/" />} />
+          <Route path="/applications" element={user ? <Applications /> : <Navigate to="/" />} />
+          <Route path="/auto-apply" element={user ? <AutoApplySettings /> : <Navigate to="/" />} />
+          <Route path="/profile" element={user ? <Profile /> : <Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
-    </div>
+    </AuthContext.Provider>
   );
 }
 
